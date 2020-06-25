@@ -1,10 +1,9 @@
 package com.example.frontend;
 
 
-import com.example.frontend.client.CurrentWeatherClient;
+
 import com.example.frontend.config.CoreConfiguration;
 import com.example.frontend.domain.dto.CurrentWeatherDto;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.client.RestTemplate;
 
 import java.sql.SQLException;
