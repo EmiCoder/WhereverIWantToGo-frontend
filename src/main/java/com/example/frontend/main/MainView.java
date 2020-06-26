@@ -1,33 +1,35 @@
 package com.example.frontend.main;
 import com.example.frontend.database.DbManager;
-import com.example.frontend.domain.RequestForm;
-import com.example.frontend.domain.ResponseCity;
+import com.example.frontend.domain.*;
 import com.example.frontend.domain.dto.LoginData;
-import com.example.frontend.service.CitiesService;
-import com.example.frontend.domain.UserRequest;
-import com.example.frontend.service.LogSavingService;
+import com.example.frontend.service.*;
 import com.example.frontend.web.GoogleShowMethod;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Label;
+import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.Route;
-import sun.rmi.runtime.Log;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 
 
 @Route
-public class MainView extends VerticalLayout {
+public class MainView extends VerticalLayout  {
+
 
     private CitiesService citiesService = new CitiesService();
+    private ForgottenPasswordForm forgottenPasswordForm = new ForgottenPasswordForm();
     private RequestForm requestForm = new RequestForm();
 
 
@@ -36,29 +38,37 @@ public class MainView extends VerticalLayout {
     private Button registerButton = new Button("Register");
     private Button clearButton = new Button("Try again");
     private Button logoutButton = new Button("Log out");
+    private Button register = new Button("Register");
+    private Button commitButton = new Button("Commit");
 
     private UserRequest userRequest = new UserRequest();
-    private LoginData loginData = new LoginData();
+    private User user = new User();
+    private ForgottenPasswordUser forgottenPasswordUser = new ForgottenPasswordUser();
+    private static LoginData loginData = new LoginData();
     private int userId;
 
 
     private HorizontalLayout mainContent;
-    private VerticalLayout loginLayout;
-
-    VerticalLayout verticalLayout;
-    Grid<ResponseCity> grid;
+    private VerticalLayout verticalLayout;
+    private Grid<ResponseCity> grid;
 
     boolean searchButtonClicked = false;
     boolean temperatureComboBox = false;
     boolean monthComboBox = false;
     boolean countryComboBox = false;
     boolean sorryImagePrinted = false;
+
+    boolean forgottenPasswordFormNick = false;
+    boolean forgottenPasswordFormFirstname = false;
+    boolean forgottenPasswordFormLastname = false;
+    boolean forgottenPasswordFormAge = false;
+    boolean forgottenPasswordFormEmail = false;
+
+
     boolean loginButtonPressed = false;
     boolean registerButtonPressed = false;
     boolean logged = false;
     boolean registered = false;
-    boolean nickFilled = false;
-    boolean passwordFilled = false;
 
     Image mainImageWorld =  new Image("img/wholeWorld.png", "Alternative text");
     Image sorryImage =  new Image("img/tryAgain.png", "Alternative text");
@@ -70,13 +80,23 @@ public class MainView extends VerticalLayout {
     private Label emptyLabel3 = new Label();
     private Label emptyLabel4 = new Label();
 
-    private TextField nick;
-    private TextField password;
+    private TextField nick = new TextField("Nick");
+    private TextField password = new TextField("Password");
     private Button logInButton = new Button("Log in");
     private Button forgotButton = new Button("Forgot password");
-    private Label title = new Label("LOG IN");
+    private Label logInTitle = new Label("LOG IN");
+    private Label registerTitle = new Label("Register process");
+
+
+    private TextField nickOfNewUser = new TextField("Nick");
+    private TextField firstname = new TextField("Firstname");
+    private TextField lastname = new TextField("Lastname");
+    private ComboBox<Integer> age = new ComboBox<>("Age");
+    private TextField eMail = new TextField("e-mail");
+
 
     public MainView() throws SQLException {
+        age.setItems(generateAgeList());
         verticalLayout = new VerticalLayout();
         verticalLayout.setWidth("40%");
         mainContent = new HorizontalLayout();
@@ -85,30 +105,112 @@ public class MainView extends VerticalLayout {
         mainImageWorld.setHeight("85%");
         sorryImage.setHeight("60%");
 
-//        if (!logged && !registered) {
-            loginButton.setWidth("60%");
-            loginButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-            loginButton.addClickListener(event -> {
-                verticalLayout.remove(loginButton, registerButton);
-                verticalLayout.add(title, nick, password, logInButton, forgotButton);
-                loginButtonPressed = true;
-            });
-            registerButton.setWidth("60%");
-            registerButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-            registerButton.addClickListener(event -> {
-                registerButtonPressed = true;
-            });
+        forgottenPasswordForm.getNick().addValueChangeListener(event -> {
+            forgottenPasswordUser.setNick(new StringBuilder(event.getValue()));
+            forgottenPasswordFormNick = true;
+        });
+        forgottenPasswordForm.getFirstname().addValueChangeListener(event -> {
+            forgottenPasswordUser.setFirstname(new StringBuilder(event.getValue()));
+            forgottenPasswordFormFirstname = true;
+        });
+        forgottenPasswordForm.getLastname().addValueChangeListener(event -> {
+            forgottenPasswordUser.setLastname(new StringBuilder(event.getValue()));
+            forgottenPasswordFormLastname = true;
+        });
+        forgottenPasswordForm.getAge().addValueChangeListener(event -> {
+            forgottenPasswordUser.setAge(event.getValue());
+            forgottenPasswordFormAge = true;
+        });
+        forgottenPasswordForm.getEMail().addValueChangeListener(event -> {
+            forgottenPasswordUser.setEMail(new StringBuilder(event.getValue()));
+            forgottenPasswordFormEmail = true;
+        });
 
+        commitButton.setWidth("60%");
+        commitButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        commitButton.addClickListener(event -> {
+            if (forgottenPasswordFormNick && forgottenPasswordFormFirstname && forgottenPasswordFormLastname
+                && forgottenPasswordFormAge && forgottenPasswordFormEmail) {
+                try {
+                    ForgotPasswordService.getPassword(forgottenPasswordUser);
+                    verticalLayout.remove(forgottenPasswordForm, commitButton);
+                    verticalLayout.add(loginButton, registerButton);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            } else {
+                Notification.show("Fill all fields");
+            }
+        });
+
+        loginButton.setWidth("60%");
+        loginButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        loginButton.addClickListener(event -> {
+            verticalLayout.remove(loginButton, registerButton);
+            verticalLayout.add(logInTitle, nick, password, logInButton, forgotButton);
+        });
+
+        nickOfNewUser.setValueChangeMode(ValueChangeMode.EAGER);
+        nickOfNewUser.setWidth("60%");
+        nickOfNewUser.addValueChangeListener(e -> {
+            user.setNick(new StringBuilder(e.getValue()));
+        });
+        firstname.setValueChangeMode(ValueChangeMode.EAGER);
+        firstname.setWidth("60%");
+        firstname.addValueChangeListener(e -> {
+            user.setFirstname(new StringBuilder(e.getValue()));
+        });
+        lastname.setValueChangeMode(ValueChangeMode.EAGER);
+        lastname.setWidth("60%");
+        lastname.addValueChangeListener(e -> {
+            user.setLastname(new StringBuilder(e.getValue()));
+        });
+        age.setWidth("60%");
+        age.addValueChangeListener(e -> {
+            user.setAge(e.getValue());
+        });
+        eMail.setValueChangeMode(ValueChangeMode.EAGER);
+        eMail.setWidth("60%");
+        eMail.addValueChangeListener(e -> {
+            user.setEMail(new StringBuilder(e.getValue()));
+        });
+        register.setWidth("60%");
+        register.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        register.addClickListener(event -> {
+            try {
+                UserSavingService.addUserToDatabase(user);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+            try {
+                RegisterSavingService.addRegisterToDatabase(user);
+                EmailSendingService.sendEmail(user);
+                Notification.show("Registration successful. You've got an uniqe password on your e-mail. Check it.");
+            } catch (SQLException e) {
+                e.printStackTrace();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            verticalLayout.remove(registerTitle, nickOfNewUser, firstname, lastname, age, eMail, register);
             verticalLayout.add(appTitle, loginButton, registerButton);
-//        }
+        });
+
+        registerButton.setWidth("60%");
+        registerButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        registerButton.addClickListener(event -> {
+            verticalLayout.remove(loginButton, registerButton);
+            verticalLayout.add(registerTitle, nickOfNewUser, firstname, lastname, age, eMail, register);
+        });
+
+        verticalLayout.add(appTitle, loginButton, registerButton);
 
         logoutButton.setWidth("60%");
         logoutButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         logoutButton.addClickListener(event -> {
             verticalLayout.remove(requestForm, searchButton, clearButton, emptyLabel1, emptyLabel2, emptyLabel3, emptyLabel4, loggedLabel, logoutButton);
             verticalLayout.add(appTitle, loginButton, registerButton);
-            loginData.setNick(new StringBuilder(""));
-            loginData.setPassword(new StringBuilder(""));
+            mainContent.remove(grid);
+            mainContent.add(mainImageWorld);
         });
         requestForm.getTemperature().addValueChangeListener(event -> {
             temperatureComboBox = true;
@@ -125,35 +227,96 @@ public class MainView extends VerticalLayout {
 
         searchButton.setWidth("60%");
         searchButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        searchButton.addClickListener(event -> {
+            if (!searchButtonClicked && temperatureComboBox && monthComboBox && countryComboBox) {
+                try {
+                    if (citiesService.getCitiesToGo(userRequest).size() != 0) {
+                        addToDatabase();
+                        mainContent.remove(mainImageWorld);
+                        grid = new Grid<>(ResponseCity.class);
+                        grid.setSizeFull();
+                        mainContent.add(grid);
+                        showResponseCitiesList();
+                        searchButtonClicked = true;
+                    } else {
+                        mainContent.remove(mainImageWorld);
+                        mainContent.add(sorryImage);
+                        sorryImagePrinted = true;
+                        searchButtonClicked = true;
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
 
         clearButton.setWidth("60%");
         clearButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        clearButton.addClickListener(event -> {
+            if (sorryImagePrinted) {
+                mainContent.remove(sorryImage);
+                mainContent.add(mainImageWorld);
+                searchButtonClicked = false;
+                requestForm.getCountry().setValue("");
+                requestForm.getMonth().setValue("");
+                requestForm.getTemperature().setValue("");
+                temperatureComboBox = false;
+                monthComboBox = false;
+                countryComboBox = false;
+                sorryImagePrinted = false;
+            } else if (temperatureComboBox && monthComboBox && countryComboBox && searchButtonClicked) {
+                mainContent.remove(grid);
+                mainContent.add(mainImageWorld);
+                requestForm.getCountry().setValue("");
+                requestForm.getMonth().setValue("");
+                requestForm.getTemperature().setValue("");
+                temperatureComboBox = false;
+                monthComboBox = false;
+                countryComboBox = false;
+                searchButtonClicked = false;
+            }  else if ((!temperatureComboBox && monthComboBox && countryComboBox) ||
+                    (!temperatureComboBox && !monthComboBox && countryComboBox) ||
+                    (!temperatureComboBox && monthComboBox && !countryComboBox) ||
+                    (!temperatureComboBox && !monthComboBox && !countryComboBox) ||
+                    (temperatureComboBox && !monthComboBox && countryComboBox) ||
+                    (temperatureComboBox && monthComboBox && !countryComboBox) ||
+                    (temperatureComboBox && !monthComboBox && !countryComboBox)) {
+                searchButtonClicked = false;
+                requestForm.getCountry().setValue("");
+                requestForm.getMonth().setValue("");
+                requestForm.getTemperature().setValue("");
+                temperatureComboBox = false;
+                monthComboBox = false;
+                countryComboBox = false;
+            } else {
+                searchButtonClicked = false;
+                mainContent.remove(grid);
+                mainContent.add(mainImageWorld);
+                requestForm.getCountry().setValue("");
+                requestForm.getMonth().setValue("");
+                requestForm.getTemperature().setValue("");
+                temperatureComboBox = false;
+                monthComboBox = false;
+                countryComboBox = false;
+            }
+        });
 
-        nick = new TextField("Nick");
-//        nick.setValueChangeMode(ValueChangeMode.EAGER);
+        nick.setValueChangeMode(ValueChangeMode.EAGER);
         nick.setWidth("60%");
         nick.addValueChangeListener(e -> {
-            nickFilled = true;
             loginData.setNick(new StringBuilder(e.getValue()));
         });
-        password = new TextField("Password");
-//        password.setValueChangeMode(ValueChangeMode.EAGER);
+        password.setValueChangeMode(ValueChangeMode.EAGER);
         password.setWidth("60%");
         password.addValueChangeListener(e -> {
-            passwordFilled = true;
             loginData.setPassword(new StringBuilder(e.getValue()));
         });
         logInButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         logInButton.setWidth("60%");
         logInButton.addClickListener(e -> {
-            System.out.println("klikam");
-//            if (nickFilled && passwordFilled) {
-//                System.out.println("jestem za ifem");
                 try {
-                    System.out.println("jestem za try");
-                    System.out.println(loginData.getNick());
-                    System.out.println(loginData.getPassword());
-                    System.out.println("");
                     DbManager dbManager = DbManager.getInstance();
                     Statement statement = dbManager.getConnection().createStatement();
                     ResultSet resultSet = statement.executeQuery("select * from users where NICK = " +  "'" + loginData.getNick() + "'" + " and EMAIL_PASSWORD = " + "'" + loginData.getPassword() + "'");
@@ -161,25 +324,31 @@ public class MainView extends VerticalLayout {
 
                         if (resultSet.isLast()) {
                             userId = Integer.parseInt(resultSet.getString(1));
-                            verticalLayout.remove(title, nick, password, logInButton, forgotButton);
+                            verticalLayout.remove(logInTitle, nick, password, logInButton, forgotButton);
                             loggedLabel.setText("Logged as " + loginData.getNick());
                             loggedLabel.setWidth("60%");
                             verticalLayout.add(requestForm, searchButton, clearButton, emptyLabel1, emptyLabel2, emptyLabel3, emptyLabel4, loggedLabel, logoutButton);
                             LogSavingService.saveLog(userId);
-                            logged = true;
+                        } else {
+                            Notification.show("Incorect Nick or Password. Try again.");
                         }
 
                     statement.close();
                 } catch (SQLException ex) {
                     ex.printStackTrace();
                 }
-                nickFilled = false;
-                passwordFilled = false;
-//            }
         });
 
         forgotButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         forgotButton.setWidth("60%");
+        forgotButton.addClickListener(event -> {
+            try {
+                verticalLayout.remove(logInTitle, nick, password, logInButton, forgotButton);
+                verticalLayout.add(forgottenPasswordForm,commitButton);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
 
 
         mainContent.add(verticalLayout, mainImageWorld);
@@ -212,6 +381,14 @@ public class MainView extends VerticalLayout {
                 "'" + userRequest.getCountryName() + "'" + ")");
         statement.close();
     }
+
+    private List<Integer> generateAgeList() {
+        List<Integer> list = new ArrayList<>();
+        for (int i = 1; i <= 100; i++) {
+            list.add(i);
+        } return list;
+    }
+
 
 
 }
