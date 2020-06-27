@@ -4,6 +4,7 @@ import com.example.frontend.database.DbManager;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -12,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Getter
+@Setter
 public class RequestForm extends FormLayout {
 
     private static final int MONTH = 12;

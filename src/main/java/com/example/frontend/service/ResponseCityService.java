@@ -1,7 +1,7 @@
 package com.example.frontend.service;
 
+import com.example.frontend.domain.Request;
 import com.example.frontend.domain.ResponseCity;
-import com.example.frontend.domain.UserRequest;
 import lombok.Getter;
 
 import java.util.ArrayList;
@@ -42,7 +42,7 @@ public class ResponseCityService {
 //        return cities;
 //    }
 
-    public List<ResponseCity> getCities(UserRequest userRequest) {
+    public List<ResponseCity> getCities(Request userRequest) {
         return responseCities.stream()
                                .filter(u -> u.getCountryName().equals(userRequest.getCountryName()))
                                .collect(Collectors.toList());

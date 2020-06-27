@@ -1,5 +1,6 @@
 package com.example.frontend.main;
 import com.example.frontend.database.DbManager;
+import com.example.frontend.database.STM;
 import com.example.frontend.domain.*;
 import com.example.frontend.domain.dto.LoginData;
 import com.example.frontend.service.*;
@@ -27,6 +28,10 @@ import java.util.List;
 @Route
 public class MainView extends VerticalLayout  {
 
+    private static StringBuilder temperature;
+    private static StringBuilder month;
+    private static StringBuilder country;
+
     private HorizontalLayout mainContent;
     private VerticalLayout verticalLayout;
     private Grid<ResponseCity> grid;
@@ -46,8 +51,9 @@ public class MainView extends VerticalLayout  {
     private Button logInButton = new Button("Log in");
     private Button forgotButton = new Button("Forgot password");
 
-    private UserRequest userRequest = new UserRequest();
+    private Req req = new Req();
     private User user = new User();
+    private User oldUser = new User();
     private ForgottenPasswordUser forgottenPasswordUser = new ForgottenPasswordUser();
     private static LoginData loginData = new LoginData();
     private int userId;
@@ -205,15 +211,15 @@ public class MainView extends VerticalLayout  {
         });
         requestForm.getTemperature().addValueChangeListener(event -> {
             temperatureComboBox = true;
-            userRequest.setTemperature(event.getValue());
+            req.setTemperature(new StringBuilder(event.getValue()));
         });
         requestForm.getMonth().addValueChangeListener(event -> {
             monthComboBox = true;
-            userRequest.setMonth(event.getValue());
+            req.setMonth(new StringBuilder(event.getValue()));
         });
         requestForm.getCountry().addValueChangeListener(event -> {
             countryComboBox = true;
-            userRequest.setCountryName(event.getValue());
+            req.setCountry(new StringBuilder(event.getValue()));
         });
 
         searchButton.setWidth("60%");
@@ -221,8 +227,16 @@ public class MainView extends VerticalLayout  {
         searchButton.addClickListener(event -> {
             if (!searchButtonClicked && temperatureComboBox && monthComboBox && countryComboBox) {
                 try {
-                    if (citiesService.getCitiesToGo(userRequest).size() != 0) {
-                        addToDatabase();
+
+                    if (citiesService.getCitiesToGo(req).size() != 0) {
+                        Request request = new Request();
+                        request.setUser(getOldUser(userId));
+                        request.setTemperature(Integer.parseInt(req.getTemperature().toString()));
+                        request.setMonth(req.getMonth().toString());
+                        request.setCountryName(req.getCountry().toString());
+                        request.setRequestDate(DataSettings.setDate());
+
+                        addToDatabase(request);
                         mainContent.remove(mainImageWorld);
                         grid = new Grid<>(ResponseCity.class);
                         grid.setSizeFull();
@@ -315,10 +329,12 @@ public class MainView extends VerticalLayout  {
 
                         if (resultSet.isLast()) {
                             userId = Integer.parseInt(resultSet.getString(1));
+                            oldUser = getOldUser(userId);
                             verticalLayout.remove(logInTitle, nick, password, logInButton, forgotButton);
                             loggedLabel.setText("Logged as " + loginData.getNick());
                             loggedLabel.setWidth("60%");
                             verticalLayout.add(requestForm, searchButton, clearButton, emptyLabel1, emptyLabel2, emptyLabel3, emptyLabel4, loggedLabel, logoutButton);
+                            user.setId(userId);
                             LogSavingService.saveLog(userId);
                         } else {
                             Notification.show("Incorect Nick or Password. Try again.");
@@ -353,7 +369,7 @@ public class MainView extends VerticalLayout  {
 
     private void showResponseCitiesList() throws SQLException, InterruptedException {
         mainContent.add(grid);
-        grid.setItems(citiesService.getCitiesToGo(userRequest));
+        grid.setItems(citiesService.getCitiesToGo(req));
         grid.addComponentColumn(this::button).setHeader("GoogleMaps");
     }
 
@@ -363,13 +379,16 @@ public class MainView extends VerticalLayout  {
         return button;
     }
 
-    private void addToDatabase() throws SQLException {
+    private void addToDatabase(Request request) throws SQLException {
         DbManager dbManager = DbManager.getInstance();
         Statement statement = dbManager.getConnection().createStatement();
-        statement.execute("insert into user_requests (TEMPERATURE, MTH, COUNTRY) values " +
-                "(" + "'" + userRequest.getTemperature() + "'" + ","  +
-                "'" + userRequest.getMonth() + "'" + "," +
-                "'" + userRequest.getCountryName() + "'" + ")");
+
+        statement.execute("insert into requests (USER_ID, TEMPERATURE, MTH, COUNTRY, REQUEST_DATE) values " +
+                                                                                        "(" + request.getUser().getId() + "," +
+                                                                                         request.getTemperature() + ","  +
+                                                                                        "'" + request.getMonth() + "'" + "," +
+                                                                                        "'" + request.getCountryName() + "'" + "," +
+                                                                                        "'" + request.getRequestDate() + "'" +")");
         statement.close();
     }
 
@@ -378,6 +397,23 @@ public class MainView extends VerticalLayout  {
         for (int i = 1; i <= 100; i++) {
             list.add(i);
         } return list;
+    }
+
+    private User getOldUser(int userId) throws SQLException {
+        Statement statement = STM.getStatement();
+        ResultSet resultSet = statement.executeQuery("select * from users where ID = " +  userId);
+        resultSet.next();
+        if (resultSet.isLast()) {
+            oldUser.setId(userId);
+            oldUser.setNick(new StringBuilder(resultSet.getString(2)));
+            oldUser.setFirstname(new StringBuilder(resultSet.getString(3)));
+            oldUser.setLastname(new StringBuilder(resultSet.getString(4)));
+            oldUser.setAge(Integer.parseInt(resultSet.getString(5)));
+            oldUser.setEMail(new StringBuilder(resultSet.getString(6)));
+            oldUser.setPassword(new StringBuilder(resultSet.getString(7)));
+            return oldUser;
+        }
+        return null;
     }
 
 }

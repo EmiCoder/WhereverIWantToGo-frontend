@@ -1,5 +1,6 @@
 package com.example.frontend.domain;
 
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -12,16 +13,22 @@ import javax.persistence.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name= "USER_REQUESTS")
-public class UserRequest {
+@Table(name= "REQUESTS")
+public class Request {
+
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "ID")
     private int id;
+    @ManyToOne
+    @JoinColumn(name = "USER_ID")
+    private User user;
     @Column(name = "TEMPERATURE")
-    private String temperature;
+    private int temperature;
     @Column(name = "MTH")
     private String month;
     @Column(name = "COUNTRY")
     private String countryName;
+    @Column(name = "REQUEST_DATE")
+    private String requestDate;
 }

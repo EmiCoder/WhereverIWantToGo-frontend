@@ -2,8 +2,9 @@ package com.example.frontend.service;
 
 import com.example.frontend.config.CoreConfiguration;
 import com.example.frontend.database.DbManager;
+import com.example.frontend.domain.Req;
+import com.example.frontend.domain.Request;
 import com.example.frontend.domain.ResponseCity;
-import com.example.frontend.domain.UserRequest;
 import com.example.frontend.domain.dto.CurrentWeatherDto;
 import lombok.Getter;
 import org.springframework.web.client.HttpClientErrorException;
@@ -30,14 +31,14 @@ public class CitiesService {
     public CitiesService()  {
     }
 
-    public List<ResponseCity> getCitiesToGo(UserRequest request) throws SQLException {
-        ResultSet resultSet = getStatement().executeQuery("select COUNTRY_CODE from countries where COUNTRY_NAME = \'" + request.getCountryName() + "\'");
+    public List<ResponseCity> getCitiesToGo(Req req) throws SQLException {
+        ResultSet resultSet = getStatement().executeQuery("select COUNTRY_CODE from countries where COUNTRY_NAME = \'" + req.getCountry() + "\'");
         resultSet.next();
         String countryCode = resultSet.getString(1);
         statement = getStatement();
         rs = statement.executeQuery("select CITY_ID, CITY_NAME, COUNTRY_CODE from cities_artificial_data where " +
-                request.getMonth() + " > " + (Integer.parseInt(request.getTemperature()) - TEMPERATURE_SCOPE) + " and " + request.getMonth() +
-                " < " + (request.getTemperature() + TEMPERATURE_SCOPE) + " and COUNTRY_CODE = \'" + countryCode + "\'");
+                req.getMonth() + " > " + (Integer.parseInt(req.getTemperature().toString()) - TEMPERATURE_SCOPE) + " and " + req.getMonth() +
+                " < " + (Integer.parseInt(req.getTemperature().toString() + TEMPERATURE_SCOPE) + " and COUNTRY_CODE = \'" + countryCode + "\'"));
 
         List<ResponseCity> list = new ArrayList<>();
         while (rs.next()) {

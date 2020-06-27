@@ -6,6 +6,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
@@ -30,4 +32,20 @@ public class User {
     private StringBuilder eMail;
     @Column(name = "EMAIL_PASSWORD")
     private StringBuilder password;
+
+    @OneToMany(
+            targetEntity = LogIn.class,
+            mappedBy = "user",
+            cascade = CascadeType.ALL,
+            fetch = FetchType.LAZY
+    )
+    private List<LogIn> logsIn = new ArrayList<>();
+
+    @OneToMany(
+            targetEntity = Request.class,
+            mappedBy = "user",
+            cascade = CascadeType.ALL,
+            fetch = FetchType.LAZY
+    )
+    private List<Request> requests = new ArrayList<>();
 }
