@@ -27,6 +27,9 @@ import java.util.List;
 @Route
 public class MainView extends VerticalLayout  {
 
+    private HorizontalLayout mainContent;
+    private VerticalLayout verticalLayout;
+    private Grid<ResponseCity> grid;
 
     private CitiesService citiesService = new CitiesService();
     private ForgottenPasswordForm forgottenPasswordForm = new ForgottenPasswordForm();
@@ -40,6 +43,8 @@ public class MainView extends VerticalLayout  {
     private Button logoutButton = new Button("Log out");
     private Button register = new Button("Register");
     private Button commitButton = new Button("Commit");
+    private Button logInButton = new Button("Log in");
+    private Button forgotButton = new Button("Forgot password");
 
     private UserRequest userRequest = new UserRequest();
     private User user = new User();
@@ -47,28 +52,17 @@ public class MainView extends VerticalLayout  {
     private static LoginData loginData = new LoginData();
     private int userId;
 
-
-    private HorizontalLayout mainContent;
-    private VerticalLayout verticalLayout;
-    private Grid<ResponseCity> grid;
-
     boolean searchButtonClicked = false;
     boolean temperatureComboBox = false;
     boolean monthComboBox = false;
     boolean countryComboBox = false;
     boolean sorryImagePrinted = false;
-
     boolean forgottenPasswordFormNick = false;
     boolean forgottenPasswordFormFirstname = false;
     boolean forgottenPasswordFormLastname = false;
     boolean forgottenPasswordFormAge = false;
     boolean forgottenPasswordFormEmail = false;
 
-
-    boolean loginButtonPressed = false;
-    boolean registerButtonPressed = false;
-    boolean logged = false;
-    boolean registered = false;
 
     Image mainImageWorld =  new Image("img/wholeWorld.png", "Alternative text");
     Image sorryImage =  new Image("img/tryAgain.png", "Alternative text");
@@ -79,20 +73,17 @@ public class MainView extends VerticalLayout  {
     private Label emptyLabel2 = new Label();
     private Label emptyLabel3 = new Label();
     private Label emptyLabel4 = new Label();
-
-    private TextField nick = new TextField("Nick");
-    private TextField password = new TextField("Password");
-    private Button logInButton = new Button("Log in");
-    private Button forgotButton = new Button("Forgot password");
     private Label logInTitle = new Label("LOG IN");
     private Label registerTitle = new Label("Register process");
 
-
+    private TextField nick = new TextField("Nick");
+    private TextField password = new TextField("Password");
     private TextField nickOfNewUser = new TextField("Nick");
     private TextField firstname = new TextField("Firstname");
     private TextField lastname = new TextField("Lastname");
-    private ComboBox<Integer> age = new ComboBox<>("Age");
     private TextField eMail = new TextField("e-mail");
+
+    private ComboBox<Integer> age = new ComboBox<>("Age");
 
 
     public MainView() throws SQLException {
@@ -388,7 +379,5 @@ public class MainView extends VerticalLayout  {
             list.add(i);
         } return list;
     }
-
-
 
 }

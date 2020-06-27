@@ -72,15 +72,15 @@ public class CitiesService {
         currentWeatherDto.getMainDto().setFeels_like((int)(currentWeatherDto.getMainDto().getFeels_like() - TEMPERATURE_INDICATOR));
     }
 
+    private String getCurrentWeatherString(CurrentWeatherDto currentWeatherDto) {
+        return "T-" + String.valueOf(currentWeatherDto.getMainDto().getFeels_like()).substring(0,3) +
+                "°C P-" + currentWeatherDto.getMainDto().getPressure() +
+                "hPa H-" + currentWeatherDto.getMainDto().getHumidity() + "%";
+    }
+
     private Statement getStatement() throws SQLException {
         DbManager dbManager = DbManager.getInstance();
         return dbManager.getConnection().createStatement();
-    }
-
-    private String getCurrentWeatherString(CurrentWeatherDto currentWeatherDto) {
-        return "T-" + String.valueOf(currentWeatherDto.getMainDto().getFeels_like()).substring(0,2) +
-                "°C P-" + currentWeatherDto.getMainDto().getPressure() +
-                "hPa H-" + currentWeatherDto.getMainDto().getHumidity() + "%";
     }
 
 }

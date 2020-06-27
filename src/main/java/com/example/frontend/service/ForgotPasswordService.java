@@ -1,8 +1,8 @@
 package com.example.frontend.service;
 
 import com.example.frontend.database.DbManager;
+import com.example.frontend.database.STM;
 import com.example.frontend.domain.ForgottenPasswordUser;
-import com.example.frontend.domain.User;
 
 
 import java.sql.ResultSet;
@@ -24,8 +24,7 @@ public class ForgotPasswordService {
     }
 
     private static boolean isExistTheUser(ForgottenPasswordUser forgottenUser) throws SQLException {
-        DbManager dbManager = DbManager.getInstance();
-        Statement statement = dbManager.getConnection().createStatement();
+        Statement statement = STM.getStatement();
         ResultSet resultSet = statement.executeQuery("select * from users where NICK = " +  "'" + forgottenUser.getNick() + "'" +
                                                                                                 " and FIRSTNAME = " + "'" + forgottenUser.getFirstname() + "'" +
                                                                                                 " and LASTNAME = " + "'" + forgottenUser.getLastname() + "'" +

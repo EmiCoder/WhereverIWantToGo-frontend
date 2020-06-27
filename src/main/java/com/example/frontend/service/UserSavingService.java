@@ -1,6 +1,7 @@
 package com.example.frontend.service;
 
 import com.example.frontend.database.DbManager;
+import com.example.frontend.database.STM;
 import com.example.frontend.domain.User;
 import org.apache.commons.lang3.RandomStringUtils;
 
@@ -10,8 +11,7 @@ import java.sql.Statement;
 public class UserSavingService {
 
     public static void addUserToDatabase(User user) throws SQLException {
-        DbManager dbManager = DbManager.getInstance();
-        Statement statement = dbManager.getConnection().createStatement();
+        Statement statement = STM.getStatement();
         statement.execute("insert into users (NICK, FIRSTNAME, LASTNAME, AGE, EMAIL, EMAIL_PASSWORD) values " +
                                                                                             "(" + "'" + user.getNick() + "'" + ","  +
                                                                                             "'" + user.getFirstname() + "'" + "," +
