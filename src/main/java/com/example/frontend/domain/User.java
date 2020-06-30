@@ -48,4 +48,20 @@ public class User {
             fetch = FetchType.LAZY
     )
     private List<Request> requests = new ArrayList<>();
+
+    @OneToMany(
+            targetEntity = LogOut.class,
+            mappedBy = "user",
+            cascade = CascadeType.ALL,
+            fetch = FetchType.LAZY
+    )
+    private List<LogOut> logsout = new ArrayList<>();
+
+    @OneToMany(
+            targetEntity = SentEmail.class,
+            mappedBy = "user",
+            cascade = CascadeType.ALL,
+            fetch = FetchType.LAZY
+    )
+    private List<SentEmail> sentEmails = new ArrayList<>();
 }

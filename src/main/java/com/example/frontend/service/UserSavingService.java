@@ -1,6 +1,5 @@
 package com.example.frontend.service;
 
-import com.example.frontend.database.DbManager;
 import com.example.frontend.database.STM;
 import com.example.frontend.domain.User;
 import org.apache.commons.lang3.RandomStringUtils;

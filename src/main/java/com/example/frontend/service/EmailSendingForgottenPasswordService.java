@@ -8,5 +8,6 @@ public class EmailSendingForgottenPasswordService {
     public static void sendEmail(ForgottenPasswordUser user, StringBuilder password) throws Exception {
         MailForgottenPassword mail = new MailForgottenPassword(user, password);
         mail.getEmail().send();
+        SentEmailForgottenPasswordService.saveSentEmail(user);
     }
 }

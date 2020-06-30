@@ -17,6 +17,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.Route;
+import lombok.NoArgsConstructor;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -68,6 +69,7 @@ public class MainView extends VerticalLayout  {
     boolean forgottenPasswordFormLastname = false;
     boolean forgottenPasswordFormAge = false;
     boolean forgottenPasswordFormEmail = false;
+    boolean gridAdded = false;
 
 
     Image mainImageWorld =  new Image("img/wholeWorld.png", "Alternative text");
@@ -129,12 +131,27 @@ public class MainView extends VerticalLayout  {
             if (forgottenPasswordFormNick && forgottenPasswordFormFirstname && forgottenPasswordFormLastname
                 && forgottenPasswordFormAge && forgottenPasswordFormEmail) {
                 try {
-                    ForgotPasswordService.getPassword(forgottenPasswordUser);
-                    verticalLayout.remove(forgottenPasswordForm, commitButton);
-                    verticalLayout.add(loginButton, registerButton);
-                } catch (Exception e) {
+                    user.setNick(forgottenPasswordUser.getNick());
+                    user.setFirstname(forgottenPasswordUser.getFirstname());
+                    user.setLastname(forgottenPasswordUser.getLastname());
+                    user.setAge(forgottenPasswordUser.getAge());
+                    user.setEMail(forgottenPasswordUser.getEMail());
+                    if (UserExistingStatusChecking.isUserExisting(user)) {
+                        try {
+                            ForgotPasswordService.getPassword(forgottenPasswordUser);
+                            verticalLayout.remove(forgottenPasswordForm, commitButton);
+                            verticalLayout.add(loginButton, registerButton);
+                            Notification.show("Password sent on your email");
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    } else {
+                        Notification.show("User doesn't exist. Check fields are correct filled.");
+                    }
+                } catch (SQLException e) {
                     e.printStackTrace();
                 }
+
             } else {
                 Notification.show("Fill all fields");
             }
@@ -174,22 +191,31 @@ public class MainView extends VerticalLayout  {
         register.setWidth("60%");
         register.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         register.addClickListener(event -> {
+
             try {
-                UserSavingService.addUserToDatabase(user);
+                if (!UserExistingStatusChecking.isUserExisting(user)) {
+                    try {
+                        UserSavingService.addUserToDatabase(user);
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                    try {
+                        RegisterSavingService.addRegisterToDatabase(user);
+                        EmailSendingService.sendEmail(user);
+                        Notification.show("Registration successful. You've got an uniqe password on your e-mail. Check it.");
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    verticalLayout.remove(registerTitle, nickOfNewUser, firstname, lastname, age, eMail, register);
+                    verticalLayout.add(appTitle, loginButton, registerButton);
+                } else {
+                    Notification.show("This user is exist already");
+                }
             } catch (SQLException e) {
                 e.printStackTrace();
             }
-            try {
-                RegisterSavingService.addRegisterToDatabase(user);
-                EmailSendingService.sendEmail(user);
-                Notification.show("Registration successful. You've got an uniqe password on your e-mail. Check it.");
-            } catch (SQLException e) {
-                e.printStackTrace();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            verticalLayout.remove(registerTitle, nickOfNewUser, firstname, lastname, age, eMail, register);
-            verticalLayout.add(appTitle, loginButton, registerButton);
         });
 
         registerButton.setWidth("60%");
@@ -206,8 +232,16 @@ public class MainView extends VerticalLayout  {
         logoutButton.addClickListener(event -> {
             verticalLayout.remove(requestForm, searchButton, clearButton, emptyLabel1, emptyLabel2, emptyLabel3, emptyLabel4, loggedLabel, logoutButton);
             verticalLayout.add(appTitle, loginButton, registerButton);
-            mainContent.remove(grid);
+            if (gridAdded) {
+                mainContent.remove(grid);
+            }
             mainContent.add(mainImageWorld);
+            gridAdded = false;
+            try {
+                LogoutService.saveLogout(userId);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         });
         requestForm.getTemperature().addValueChangeListener(event -> {
             temperatureComboBox = true;
@@ -241,6 +275,7 @@ public class MainView extends VerticalLayout  {
                         grid = new Grid<>(ResponseCity.class);
                         grid.setSizeFull();
                         mainContent.add(grid);
+                        gridAdded = true;
                         showResponseCitiesList();
                         searchButtonClicked = true;
                     } else {
@@ -415,5 +450,7 @@ public class MainView extends VerticalLayout  {
         }
         return null;
     }
+
+
 
 }
